@@ -1,0 +1,103 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: db_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: appdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d appdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dbnet
+
+  mysql:
+    image: mysql:8.0
+    container_name: db_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: appdb
+      MYSQL_USER: admin
+      MYSQL_PASSWORD: admin123
+    ports:
+      - "3306:3306"
+volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - dbnet
+
+  mariadb:
+    image: mariadb:11
+    container_name: db_mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: root123
+      MARIADB_DATABASE: appdb
+      MARIADB_USER: admin
+      MARIADB_PASSWORD: admin123
+    ports:
+      - "3307:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - dbnet
+
+  mongo:
+    image: mongo:7
+    container_name: db_mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: admin123
+      MONGO_INITDB_DATABASE: appdb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - dbnet
+
+  redis:
+    image: redis:7-alpine
+    container_name: db_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "admin123"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - dbnet
+
+  adminer:
+    image: adminer:latest
+    container_name: db_adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - mysql
+      - mariadb
+    networks:
+      - dbnet
+
+volumes:
+  pg_data:
+  mysql_data:
+  mariadb_data:
+  mongo_data:
+  redis_data:
+
+networks:
+  dbnet:
+    driver: bridge
